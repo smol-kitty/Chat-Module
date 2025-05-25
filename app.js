@@ -9,6 +9,8 @@ const groupsRoutes = require("./routers/groupsRoutes");
 const groupMembersRoutes = require("./routers/groupMembersRoutes");
 const groupChatsRoutes = require("./routers/groupChatsRoutes");
 const groupRepliesRoutes = require("./routers/groupRepliesRoutes");
+const individualChatsRoutes = require("./routers/individualChatsRoutes");
+const inidividualRepliesRoutes = require("./routers/individualRepliesRoutes");
 
 app.use(express.json());
 
@@ -19,6 +21,8 @@ app.use("/api/groups", groupsRoutes);
 app.use("/api/members", groupMembersRoutes);
 app.use("/api/grp-chats", groupChatsRoutes);
 app.use("/api/grp-replies", groupRepliesRoutes);
+app.use("/api/individual-chats", individualChatsRoutes);
+app.use("/api/individual-replies", inidividualRepliesRoutes);
 
 app.listen(3000, () => {
   console.log("🚀 Server running on http://localhost:3000");
