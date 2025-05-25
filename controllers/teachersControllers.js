@@ -1,46 +1,60 @@
-const Teacher = require("../models/teachersModel");
+const model = require("../models/teachersModel");
 
-const createTeacher = async (req, res) => {
+const getTeachers = async (req, res) => {
   try {
-    const [result] = await Teacher.createTeacher(req.body);
-    res
-      .status(201)
-      .json({ message: "Teacher created", teacher_id: result.insertId });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const mode = req.query.mode || "present";
+    const [rows] = await model.getAllTeachers(mode);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-const getAllTeachers = async (req, res) => {
+const getTeacher = async (req, res) => {
   try {
-    const [rows] = await Teacher.getAllTeachers();
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const id = req.params.id;
+    const [rows] = await model.getTeacherById(id);
+    if (rows.length === 0)
+      return res.status(404).json({ error: "Teacher not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const createTeacher = async (req, res) => {
+  try {
+    const [result] = await model.createTeacher(req.body);
+    res.status(201).json({ teacher_id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
 const updateTeacher = async (req, res) => {
   try {
-    await Teacher.updateTeacher(req.params.id, req.body);
+    const id = req.params.id;
+    await model.updateTeacher(id, req.body);
     res.json({ message: "Teacher updated successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-const deactivateTeacher = async (req, res) => {
+const deleteTeacher = async (req, res) => {
   try {
-    await Teacher.deactivateTeacher(req.params.id);
-    res.json({ message: "Teacher deactivated (soft deleted)" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const id = req.params.id;
+    await model.deleteTeacher(id);
+    res.json({ message: "Teacher marked as inactive" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
 module.exports = {
+  getTeachers,
+  getTeacher,
   createTeacher,
-  getAllTeachers,
   updateTeacher,
-  deactivateTeacher,
+  deleteTeacher,
 };

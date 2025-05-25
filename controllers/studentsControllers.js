@@ -1,50 +1,60 @@
-const Student = require('../models/studentsModel');
+const model = require("../models/studentsModel");
 
-// CREATE
-const createStudent = async (req, res) => {
-  try {
-    const student = await Student.createStudent(req.body);
-    res.status(201).json({ message: "Student created", id: student.id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// READ
 const getStudents = async (req, res) => {
   try {
-    const students = await Student.getAllStudents();
-    res.json(students);
+    const mode = req.query.mode || "present";
+    const [rows] = await model.getAllStudents(mode);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// UPDATE
+const getStudent = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [rows] = await model.getStudentById(id);
+    if (rows.length === 0)
+      return res.status(404).json({ error: "Student not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const createStudent = async (req, res) => {
+  try {
+    const [result] = await model.createStudent(req.body);
+    res.status(201).json({ student_id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const updateStudent = async (req, res) => {
-  const id = req.params.id;
   try {
-    await Student.updateStudent(id, req.body);
-    res.json({ message: "Student updated" });
+    const id = req.params.id;
+    await model.updateStudent(id, req.body);
+    res.json({ message: "Student updated successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// DELETE (soft)
 const deleteStudent = async (req, res) => {
-  const id = req.params.id;
   try {
-    await Student.deactivateStudent(id);
-    res.json({ message: "Student deactivated" });
+    const id = req.params.id;
+    await model.deleteStudent(id);
+    res.json({ message: "Student marked as inactive" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 module.exports = {
-  createStudent,
   getStudents,
+  getStudent,
+  createStudent,
   updateStudent,
   deleteStudent,
 };
