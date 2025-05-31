@@ -76,36 +76,53 @@ const updateStudent = async (req, res) => {
     delete req.body.student_id;
     delete req.body.active;
 
-    // Check student exists
+    // Fetch existing student record
     const [rows] = await model.getStudentById(id);
     if (rows.length === 0) {
       return res.status(404).json({ error: "Student not found" });
     }
 
-    // Update student data
-    await model.updateStudent(id, req.body);
+    const existingPic = rows[0].profile_pic;
+    let finalProfilePic = existingPic;
 
+    const profilePicsDir = path.join(__dirname, "..", "uploads", "profile-pic");
+    if (!fs.existsSync(profilePicsDir)) {
+      fs.mkdirSync(profilePicsDir, { recursive: true });
+    }
+
+    // If delete_pic is true, reset profile_pic to default.jpg in DB only (DO NOT delete image file)
+    if (req.body.delete_pic === "true" && existingPic !== "default.jpg") {
+      finalProfilePic = "default.jpg";
+    }
+
+    // Handle new profile picture upload
     if (req.file) {
-      // Get new photo_id for filename
+      // Delete old image file if it exists, not default, and delete_pic flag not set
+      if (finalProfilePic !== "default.jpg" && !(req.body.delete_pic === "true")) {
+        const existingPath = path.join(profilePicsDir, finalProfilePic);
+        if (fs.existsSync(existingPath)) {
+          fs.unlinkSync(existingPath);
+        }
+      }
+
+      // Generate new photo id and filename (use your insertPhotoId method)
       const [photoResult] = await model.insertPhotoId();
       const photoId = photoResult.insertId;
       const newFileName = `${photoId}.jpeg`;
 
-      const profilePicsDir = path.join(
-        __dirname,
-        "..",
-        "uploads",
-        "profile-pic"
-      );
-      if (!fs.existsSync(profilePicsDir)) {
-        fs.mkdirSync(profilePicsDir, { recursive: true });
-      }
-
       const destPath = path.join(profilePicsDir, newFileName);
       fs.renameSync(req.file.path, destPath);
 
-      await model.updateStudentProfilePic(id, newFileName);
+      finalProfilePic = newFileName;
     }
+
+    // Assign final profile pic filename for DB update
+    req.body.profile_pic = finalProfilePic;
+
+    // Remove delete_pic from body to avoid DB errors
+    delete req.body.delete_pic;
+
+    await model.updateStudent(id, req.body);
 
     res.json({ message: "Student updated successfully" });
   } catch (err) {
@@ -113,6 +130,7 @@ const updateStudent = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 const deleteStudent = async (req, res) => {
   try {

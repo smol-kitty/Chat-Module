@@ -37,9 +37,6 @@ async function seed() {
     await db.query(`CREATE TABLE IF NOT EXISTS photo_counter (
         id INT PRIMARY KEY AUTO_INCREMENT
     )`);
-    await db.query(`CREATE TABLE IF NOT EXISTS photo_counter (
-  id INT PRIMARY KEY AUTO_INCREMENT
-);`);
     await db.query(`
       CREATE TABLE IF NOT EXISTS groups_list (
         group_id BIGINT AUTO_INCREMENT PRIMARY KEY,

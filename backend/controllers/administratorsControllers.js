@@ -55,31 +55,35 @@ const updateAdmin = async (req, res) => {
   try {
     const id = req.params.id;
 
+    // Clean dangerous fields
     if ("admin_id" in req.body) delete req.body.admin_id;
     if ("active" in req.body) delete req.body.active;
 
+    // Get existing admin
     const [rows] = await model.getAdminById(id);
     if (rows.length === 0)
       return res.status(404).json({ error: "Admin not found" });
 
-    let profile_pic = rows[0].profile_pic || "default.jpg";
+    let finalProfilePic = rows[0].profile_pic || "default.jpg";
 
-    if (req.body.profile_pic === null) {
-      profile_pic = "default.jpg";
+    // Handle profile picture deletion
+    if (req.body.delete_pic === "true") {
+      finalProfilePic = "default.jpg";
     }
 
+    // Handle profile picture upload
     if (req.file) {
       const photoId = await model.generatePhotoId();
       const newFileName = `${photoId}.jpeg`;
       const newPath = path.join(PROFILE_PIC_DIR, newFileName);
       fs.renameSync(req.file.path, newPath);
-      profile_pic = newFileName;
+      finalProfilePic = newFileName;
     }
 
-    await model.updateAdmin(id, {
-      ...req.body,
-      profile_pic,
-    });
+    // Ensure profile_pic is explicitly set in the body
+    req.body.profile_pic = finalProfilePic;
+
+    await model.updateAdmin(id, req.body);
 
     res.json({ message: "Admin updated successfully" });
   } catch (err) {

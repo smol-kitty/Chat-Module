@@ -37,11 +37,8 @@ const checkCreatorExists = async (type, id) => {
 };
 
 const generatePhotoId = async () => {
-  await db.query(
-    "UPDATE photo_counter SET current = LAST_INSERT_ID(current + 1)"
-  );
-  const [[{ id }]] = await db.query("SELECT LAST_INSERT_ID() as id");
-  return id;
+  const [result] = await db.query("INSERT INTO photo_counter () VALUES ()");
+  return result.insertId;
 };
 
 const createGroup = async (groupData, profile_pic = "default.jpg") => {

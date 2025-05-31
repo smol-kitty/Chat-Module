@@ -33,12 +33,13 @@ const updateTeacher = async (id, updatedFields) => {
     name: updatedFields.name ?? existing.name,
     department: updatedFields.department ?? existing.department,
     specialization: updatedFields.specialization ?? existing.specialization,
+    profile_pic: updatedFields.profile_pic ?? existing.profile_pic,
     active: existing.active, // keep existing active status
   };
 
   const query = `
     UPDATE teachers
-    SET roll_no = ?, name = ?, department = ?, specialization = ?
+    SET roll_no = ?, name = ?, department = ?, specialization = ?, profile_pic = ?
     WHERE teacher_id = ?
   `;
   return db.query(query, [
@@ -46,6 +47,7 @@ const updateTeacher = async (id, updatedFields) => {
     updated.name,
     updated.department,
     updated.specialization,
+    updated.profile_pic,
     id,
   ]);
 };

@@ -70,7 +70,7 @@ const getChatById = async (req, res) => {
   }
 };
 
-const createChat = async (req, res) => {
+const createChat = async (req, res, io) => {
   try {
     const { sender_type, sender_id, receiver_id, message, tagged } = req.body;
 
@@ -103,6 +103,21 @@ const createChat = async (req, res) => {
       parsedTagged,
       fileNames
     );
+
+    const msgData = {
+      chat_id,
+      sender_type,
+      sender_id,
+      receiver_id,
+      message,
+      tagged: parsedTagged,
+      files: fileNames,
+      time: new Date(),
+    };
+
+    if (io) {
+      io.to(`group_${receiver_id}`).emit("receiveMessage", msgData);
+    }
 
     res
       .status(201)

@@ -69,37 +69,60 @@ const updateTeacher = async (req, res) => {
   try {
     const id = req.params.id;
 
-    // Disallow changing teacher_id and active status
-    if ("teacher_id" in req.body) delete req.body.teacher_id;
-    if ("active" in req.body) delete req.body.active;
+    // Prevent modification of protected fields
+    delete req.body.teacher_id;
+    delete req.body.active;
 
+    // Fetch current teacher data
     const [rows] = await model.getTeacherById(id);
     if (rows.length === 0) {
       return res.status(404).json({ error: "Teacher not found" });
     }
 
-    await model.updateTeacher(id, req.body);
+    const existingTeacher = rows[0];
+    let finalProfilePic = existingTeacher.profile_pic;
 
+    const profilePicsDir = path.join(__dirname, "..", "uploads", "profile-pic");
+    if (!fs.existsSync(profilePicsDir)) {
+      fs.mkdirSync(profilePicsDir, { recursive: true });
+    }
+
+    // Handle delete profile picture
+    const shouldDeletePic = req.body.delete_pic === "true";
+    if (shouldDeletePic && finalProfilePic !== "default.jpg") {
+      // Do not delete the file from disk, just reset DB field
+      finalProfilePic = "default.jpg";
+    }
+
+    // Handle new profile picture upload
     if (req.file) {
+      // If uploading a new picture and the old one exists and is not default, delete it
+      if (finalProfilePic !== "default.jpg" && !shouldDeletePic) {
+        const oldPicPath = path.join(profilePicsDir, finalProfilePic);
+        if (fs.existsSync(oldPicPath)) {
+          fs.unlinkSync(oldPicPath);
+        }
+      }
+
+      // Generate a new unique name
       const [photoResult] = await model.insertPhotoId();
       const photoId = photoResult.insertId;
       const newFileName = `${photoId}.jpeg`;
 
-      const profilePicsDir = path.join(
-        __dirname,
-        "..",
-        "uploads",
-        "profile-pic"
-      );
-      if (!fs.existsSync(profilePicsDir)) {
-        fs.mkdirSync(profilePicsDir, { recursive: true });
-      }
-
       const destPath = path.join(profilePicsDir, newFileName);
       fs.renameSync(req.file.path, destPath);
 
-      await model.updateTeacherProfilePic(id, newFileName);
+      finalProfilePic = newFileName;
     }
+
+    // Assign final profile picture to the update body
+    req.body.profile_pic = finalProfilePic;
+
+    // Remove `delete_pic` so it doesn't interfere with DB update
+    delete req.body.delete_pic;
+
+    // Perform the DB update
+    await model.updateTeacher(id, req.body);
 
     res.json({ message: "Teacher updated successfully" });
   } catch (err) {
