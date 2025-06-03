@@ -70,7 +70,7 @@ const getChatById = async (req, res) => {
   }
 };
 
-const createChat = async (req, res, io) => {
+const createChat = (io) => async (req, res) => {
   try {
     const { sender_type, sender_id, receiver_id, message, tagged } = req.body;
 

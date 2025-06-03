@@ -28,7 +28,8 @@ app.use("/api/teachers", require("./routers/teachersRoutes"));
 app.use("/api/admins", require("./routers/adminRoutes"));
 app.use("/api/groups", require("./routers/groupsRoutes"));
 app.use("/api/members", require("./routers/groupMembersRoutes"));
-app.use("/api/grp-chats", require("./routers/groupChatsRoutes"))(io); // inject io
+const groupChatsRoutes = require("./routers/groupChatsRoutes")(io);
+app.use("/api/grp-chats", groupChatsRoutes); // inject io
 app.use("/api/grp-replies", require("./routers/groupRepliesRoutes"));
 app.use("/api/individual-chats", require("./routers/individualChatsRoutes"));
 app.use(
